@@ -7,15 +7,15 @@ REST Service that return contacts from DB, exclude those that match the regular 
 #### Database initialization
 Service based on Spring Boot and PostgreSQL. For connection to DB you need to specify next configuration properties in \src\main\resources\application-dev.properties:
 
-**spring.datasource.url**=**jdbc:postgresql://{host}:{port}/{dbname}**  
-**spring.datasource.username**=**{dbuser}**  
-**spring.datasource.password**=**{dbpass}**
+**spring.datasource.url**=_jdbc:postgresql://{host}:{port}/{dbname}_    
+**spring.datasource.username**=_{dbuser}_    
+**spring.datasource.password**=_{dbpass}_ 
 
 Spring Boot can load SQL from the standard locations schema.sql and data.sql. 
 schema-postgresql.sql contains Contact table creation SQL, data-postgresql.sql - one million randomly generated contacts.
 To initialize DB set next configuration property in application-dev.properties:
 
-**spring.datasource.initialize**=**true**
+**spring.datasource.initialize**=_true_ 
 
 ####Running
 $ mvn spring-boot:run
