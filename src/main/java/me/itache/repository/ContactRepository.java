@@ -3,6 +3,8 @@ package me.itache.repository;
 import me.itache.entity.Contact;
 import me.itache.filter.Cursor;
 import me.itache.filter.ColumnFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -14,6 +16,7 @@ import java.util.*;
 @Repository
 public class ContactRepository {
     private static final int DEFAULT_FETCH_SIZE = 1000;
+    private Logger logger = LoggerFactory.getLogger(ContactRepository.class);
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -27,32 +30,45 @@ public class ContactRepository {
      */
     @Transactional(readOnly = true)
     public Set<Contact> findAll(ColumnFilter filter, Cursor cursor) {
+        logger.info("Try find contacts with filter " + filter.toString());
+        logger.info("Cursor starts from " + cursor.getLowerBound() + ", direction " + cursor.getDirection());
         jdbcTemplate.setFetchSize(DEFAULT_FETCH_SIZE);
-        Set<Contact> contacts = new TreeSet<>(
-                (o1, o2) -> (o1.getId() == o2.getId()) ? 0 : (o1.getId() > o2.getId()) ? 1 : -1);
-        long lastViewedId = cursor.getLowerBound();
-        setMaxId(cursor);
-        while(hasMoreRecords(lastViewedId, cursor)) {
-            SqlRowSet rowSet = jdbcTemplate.queryForRowSet(getQuery(cursor), lastViewedId);
+        Set<Contact> contacts = getContacts(filter, cursor);
+        logger.info("Obtain " + contacts.size() + " contacts, need - " + cursor.getSize());
+        logger.info("Last viewed id: " + cursor.getLastViewedId());
+        return contacts;
+    }
+
+    private Set<Contact> getContacts(ColumnFilter filter, Cursor cursor) {
+        Set<Contact> contacts = new TreeSet<>(getContactByIdComparator());
+        cursor.setMaxId(getMaxId());
+        outer:
+        while (hasMoreRecords(cursor)) {
+            SqlRowSet rowSet = jdbcTemplate
+                    .queryForRowSet(getQuery(cursor), cursor.getLastViewedId());
             while (rowSet.next()) {
-                if (filter.isPassed(rowSet.getString(filter.getColumn()))) {
+                cursor.setLastViewedId(rowSet.getLong("id"));
+                if (filter.isPassed(rowSet.getObject(filter.getColumn()))) {
                     contacts.add(ContactMapper.mapRow(rowSet));
                 }
                 if (contacts.size() >= cursor.getSize()) {
                     cursor.setUpperBound(rowSet.getLong("id"));
-                    return contacts;
+                    break outer;
                 }
-                lastViewedId = rowSet.getLong("id");
             }
         }
         return contacts;
     }
 
-    private boolean hasMoreRecords(long lastViewedId, Cursor cursor) {
-        if(cursor.getDirection() == Cursor.Direction.FORWARD) {
-            return lastViewedId < cursor.getMaxId();
+    private Comparator<Contact> getContactByIdComparator() {
+        return (o1, o2) -> (o1.getId() == o2.getId()) ? 0 : (o1.getId() > o2.getId()) ? 1 : -1;
+    }
+
+    private boolean hasMoreRecords(Cursor cursor) {
+        if (cursor.getDirection() == Cursor.Direction.FORWARD) {
+            return cursor.getLastViewedId() < cursor.getMaxId();
         }
-        return lastViewedId > 1;
+        return cursor.getLastViewedId() > 1;
     }
 
     private String getQuery(Cursor cursor) {
@@ -62,7 +78,7 @@ public class ContactRepository {
         return "SELECT * FROM Contact WHERE id < ? ORDER BY id DESC LIMIT 10000";
     }
 
-    private void setMaxId(Cursor cursor) {
-        cursor.setMaxId(jdbcTemplate.queryForObject("SELECT MAX(id) FROM Contact", Long.class));
+    private long getMaxId() {
+        return jdbcTemplate.queryForObject("SELECT MAX(id) FROM Contact", Long.class);
     }
 }

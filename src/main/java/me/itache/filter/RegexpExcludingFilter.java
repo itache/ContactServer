@@ -32,6 +32,6 @@ public class RegexpExcludingFilter implements ColumnFilter<String> {
 
     @Override
     public String toString() {
-        return column + "=" + pattern;
+        return column + " != " + pattern;
     }
 }

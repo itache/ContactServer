@@ -10,6 +10,7 @@ public class Cursor {
     private int size;
     private long lowerBound;
     private long upperBound;
+    private long lastViewedId;
     private Direction direction;
     private long maxId;
 
@@ -23,6 +24,7 @@ public class Cursor {
         this.size = size.orElse(DEFAULT_SIZE);
         this.direction = direction;
         this.lowerBound = lowerBound;
+        this.lastViewedId = lowerBound;
     }
 
     public static Cursor createForward(long lowerBound, Optional<Integer> size) {
@@ -53,16 +55,20 @@ public class Cursor {
         return direction;
     }
 
-    public void setLowerBound(long lowerBound) {
-        this.lowerBound = lowerBound;
-    }
-
     public void setMaxId(long maxId) {
         this.maxId = maxId;
     }
 
     public long getMaxId() {
         return maxId;
+    }
+
+    public long getLastViewedId() {
+        return lastViewedId;
+    }
+
+    public void setLastViewedId(long lastViewedId) {
+        this.lastViewedId = lastViewedId;
     }
 
     /**

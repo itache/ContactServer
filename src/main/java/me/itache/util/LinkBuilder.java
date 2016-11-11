@@ -18,7 +18,6 @@ public class LinkBuilder {
     }
 
     /**
-     *
      * @param cursor
      * @param parameters
      * @return map in format 'rel' => 'link'(
@@ -40,21 +39,21 @@ public class LinkBuilder {
         UriComponentsBuilder builder = uriComponentsBuilder.cloneBuilder();
         Arrays.stream(parameters).forEach(p -> builder.queryParam(p.getName(), p.getValue()));
         return builder
-                .query(link.toQuery(cursor))
+                .query(link.toQueryString(cursor))
                 .queryParam("size", cursor.getSize())
                 .build()
                 .toUriString();
     }
 
     private boolean hasPreviousPage(Cursor cursor) {
-        if(cursor.getDirection() == Cursor.Direction.FORWARD) {
+        if (cursor.getDirection() == Cursor.Direction.FORWARD) {
             return cursor.getLowerBound() > 0;
         }
         return cursor.getUpperBound() > 0;
     }
 
     private boolean hasNextPage(Cursor cursor) {
-        if(cursor.getDirection() == Cursor.Direction.FORWARD) {
+        if (cursor.getDirection() == Cursor.Direction.FORWARD) {
             return cursor.getUpperBound() > 0;
         }
         return cursor.getLowerBound() <= cursor.getMaxId();
@@ -63,36 +62,39 @@ public class LinkBuilder {
     private enum Link {
         NEXT {
             @Override
-            public String toQuery(Cursor cursor) {
-                if(cursor.getDirection() == Cursor.Direction.BACKWARD) {
-                    return "after=" + (cursor.getLowerBound() - 1);
+            public String toQueryString(Cursor cursor) {
+                if (cursor.getDirection() == Cursor.Direction.BACKWARD) {
+                    return AFTER_PARAM + "=" + (cursor.getLowerBound() - 1);
                 }
-                return "after=" + cursor.getUpperBound();
+                return AFTER_PARAM + "=" + cursor.getUpperBound();
             }
         },
         SELF {
             @Override
-            public String toQuery(Cursor cursor) {
-                if(cursor.getLowerBound() > 0 && cursor.getDirection() == Cursor.Direction.FORWARD) {
-                    return "after=" + cursor.getLowerBound();
+            public String toQueryString(Cursor cursor) {
+                if (cursor.getLowerBound() > 0 && cursor.getDirection() == Cursor.Direction.FORWARD) {
+                    return AFTER_PARAM + "=" + cursor.getLowerBound();
                 }
-                if(cursor.getDirection() == Cursor.Direction.BACKWARD) {
-                    return "before=" + cursor.getLowerBound();
+                if (cursor.getDirection() == Cursor.Direction.BACKWARD) {
+                    return BEFORE_PARAM + "=" + cursor.getLowerBound();
                 }
                 return "";
             }
         },
         PREVIOUS {
             @Override
-            public String toQuery(Cursor cursor) {
-                if(cursor.getDirection() == Cursor.Direction.FORWARD) {
-                    return "before=" + (cursor.getLowerBound() + 1);
+            public String toQueryString(Cursor cursor) {
+                if (cursor.getDirection() == Cursor.Direction.FORWARD) {
+                    return BEFORE_PARAM + "=" + (cursor.getLowerBound() + 1);
                 }
-                return "before=" + cursor.getUpperBound();
+                return BEFORE_PARAM + "=" + cursor.getUpperBound();
             }
         };
 
-        public abstract String toQuery(Cursor cursor);
+        private static final String AFTER_PARAM = "after";
+        private static final String BEFORE_PARAM = "before";
+
+        public abstract String toQueryString(Cursor cursor);
 
         @Override
         public String toString() {
