@@ -1,5 +1,7 @@
 ##ContactServer
 
+[![Build Status](https://travis-ci.org/itache/ContactServer.svg?branch=master)](https://travis-ci.org/itache/ContactServer)</br>
+
 REST Service that return contacts from DB, exclude those that match the regular expression.
 
 ### Launch
