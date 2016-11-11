@@ -8,7 +8,7 @@ REST Service that return contacts from DB, exclude those that match the regular 
 Service based on Spring Boot and PostgreSQL. For connection to DB you need to specify next configuration properties in \src\main\resources\application-dev.properties:
 
 **spring.datasource.url**=**jdbc:postgresql://{host}:{port}/{dbname}**  
-**spring.datasource.username**=**{dbuser}**
+**spring.datasource.username**=**{dbuser}**  
 **spring.datasource.password**=**{dbpass}**
 
 Spring Boot can load SQL from the standard locations schema.sql and data.sql. 
